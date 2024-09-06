@@ -29,6 +29,7 @@ const (
 var (
 	allowTTY     bool
 	logThreshold time.Duration
+	sendTimeout  time.Duration
 )
 
 func init() {
@@ -40,6 +41,15 @@ func init() {
 		thresholdValue = 100
 	}
 	logThreshold = time.Duration(thresholdValue) * time.Millisecond
+
+	// Get the timeout for sending messages (defaulting to 1 second if not set)
+	timeoutStr := cfg.GetEnvDefault("LOGSTREAM_SEND_TIMEOUT_MS", "1000")
+	timeoutValue, err := strconv.Atoi(timeoutStr)
+	if err != nil {
+		log.Printf("Invalid LOGSTREAM_SEND_TIMEOUT_MS value: %s, defaulting to 1000ms", timeoutStr)
+		timeoutValue = 1000
+	}
+	sendTimeout = time.Duration(timeoutValue) * time.Millisecond
 
 	pump := &LogsPump{
 		pumps:  make(map[string]*containerPump),
@@ -420,12 +430,17 @@ func (cp *containerPump) send(msg *Message) {
 
 		logstream <- msg
 
-		// Calculate the elapsed time
-		elapsed := time.Since(start)
-
-		// Log only if the time taken exceeds the threshold
-		if elapsed > logThreshold {
-			debug("Time taken to send message to logstream:", elapsed)
+		// Use select to send the message or timeout
+		select {
+		case logstream <- msg:
+			// Message sent successfully
+			elapsed := time.Since(start)
+			if elapsed > logThreshold {
+				debug("Time taken to send message to logstream:", elapsed)
+			}
+		case <-time.After(sendTimeout):
+			// Timeout occurred
+			log.Printf("Warning: Timeout sending message to logstream after %s", sendTimeout)
 		}
 	}
 }
