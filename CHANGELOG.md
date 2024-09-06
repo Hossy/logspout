@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 - Added threshold debug logging for send() blocking on pushing a message to a route.  Threshold configurable via LOGSTREAM_THRESHOLD_MS environment variable.
+- Added timeout to pushing a message to a route.  Timeout configurable via LOGSTREAM_SEND_TIMEOUT_MS environment variable.
 
 ### Removed
 
