@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -26,10 +27,20 @@ const (
 )
 
 var (
-	allowTTY bool
+	allowTTY     bool
+	logThreshold time.Duration
 )
 
 func init() {
+	// Get the threshold from an environment variable (defaulting to 100ms if not set)
+	thresholdStr := cfg.GetEnvDefault("LOGSTREAM_THRESHOLD_MS", "100")
+	thresholdValue, err := strconv.Atoi(thresholdStr)
+	if err != nil {
+		log.Printf("Invalid LOGSTREAM_THRESHOLD_MS value: %s, defaulting to 100ms", thresholdStr)
+		thresholdValue = 100
+	}
+	logThreshold = time.Duration(thresholdValue) * time.Millisecond
+
 	pump := &LogsPump{
 		pumps:  make(map[string]*containerPump),
 		routes: make(map[chan *update]struct{}),
@@ -404,7 +415,18 @@ func (cp *containerPump) send(msg *Message) {
 		if !route.MatchMessage(msg) {
 			continue
 		}
+		// Record the start time before sending the message
+		start := time.Now()
+
 		logstream <- msg
+
+		// Calculate the elapsed time
+		elapsed := time.Since(start)
+
+		// Log only if the time taken exceeds the threshold
+		if elapsed > logThreshold {
+			debug("Time taken to send message to logstream:", elapsed)
+		}
 	}
 }
 

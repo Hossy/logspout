@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 
 ### Added
+- Added threshold debug logging for send() blocking on pushing a message to a route.  Threshold configurable via LOGSTREAM_THRESHOLD_MS environment variable.
 
 ### Removed
 
@@ -263,7 +264,7 @@ All notable changes to this project will be documented in this file.
 - Base container is now Alpine
 - Moved to gliderlabs organization
 
-[unreleased]: https://github.com/gliderlabs/logspout/compare/v3.2.14...HEAD
+[unreleased]: https://github.com/gliderlabs/logspout/compare/v3.2.14...Hossy:logspout:master
 [v3.2.14]: https://github.com/gliderlabs/logspout/compare/v3.2.13...v3.2.14
 [v3.2.13]: https://github.com/gliderlabs/logspout/compare/v3.2.12...v3.2.13
 [v3.2.12]: https://github.com/gliderlabs/logspout/compare/v3.2.11...v3.2.12
